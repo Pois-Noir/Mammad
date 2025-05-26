@@ -9,9 +9,9 @@ func main() {
 	testEncoder := encoder.NewEncoder()
 
 	testMap := map[string]interface{}{
-		"key1": 1,
-		"key2": 2,
-		"key3": 3,
+		"keyssssrewrwerewr1": "value 123",
+		"key2":               2,
+		"key3":               3,
 	}
 
 	byteStream, err := testEncoder.EncodeMap(testMap)
