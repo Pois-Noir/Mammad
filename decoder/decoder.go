@@ -59,6 +59,8 @@ func DecodeBuffReader(reader *bufio.Reader) (*Decoder, error) {
 
 // Decode reads key/value pairs until EOF, and returns the assembled map.
 func (d *Decoder) Decode() (map[string]interface{}, error) {
+	// read header
+
 	result := make(map[string]interface{})
 	for {
 		key, err := d.readString()
@@ -75,6 +77,12 @@ func (d *Decoder) Decode() (map[string]interface{}, error) {
 		result[key] = val
 	}
 	return result, nil
+}
+
+func (d *Decoder) readHeader() ([4]byte, error) {
+	var header [4]byte
+	_, err := io.ReadFull(d.reader, header[:])
+	return header, err
 }
 
 // readType reads a single type-marker byte.
