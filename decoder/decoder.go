@@ -60,17 +60,24 @@ func DecodeBuffReader(reader *bufio.Reader) (*Decoder, error) {
 // Decode reads key/value pairs until EOF, and returns the assembled map.
 func (d *Decoder) Decode() (map[string]interface{}, error) {
 	// read header
-
+	header, err := d.readHeader()
+	if err != nil {
+		// TODO log the error
+		return nil, err
+	}
+	msg_len := int(binary.BigEndian.Uint32(header[:]))
 	result := make(map[string]interface{})
-	for {
-		key, err := d.readString()
+
+	msgBytesRead := 0
+	for msgBytesRead <= msg_len {
+		key, err := d.readString(&msgBytesRead)
 		if err == io.EOF {
 			break
 		} else if err != nil {
 			return nil, err
 		}
 
-		val, err := d.readValue()
+		val, err := d.readValue(&msgBytesRead)
 		if err != nil {
 			return nil, err
 		}
@@ -79,6 +86,7 @@ func (d *Decoder) Decode() (map[string]interface{}, error) {
 	return result, nil
 }
 
+// this function will read the header bytes of the message
 func (d *Decoder) readHeader() ([4]byte, error) {
 	var header [4]byte
 	_, err := io.ReadFull(d.reader, header[:])
@@ -86,42 +94,45 @@ func (d *Decoder) readHeader() ([4]byte, error) {
 }
 
 // readType reads a single type-marker byte.
-func (d *Decoder) readType() (byte, error) {
+func (d *Decoder) readType(bytes_read *int) (byte, error) {
+	// TODO do not hard code this shit
 	var t [1]byte
-	if _, err := io.ReadFull(d.r, t[:]); err != nil {
+	if _, err := io.ReadFull(d.reader, t[:]); err != nil {
 		return 0, err
 	}
+	(*bytes_read) += 1
 	return t[0], nil
 }
 
 // readUint16 reads a big-endian 2-byte length.
-func (d *Decoder) readUint16() (uint16, error) {
+func (d *Decoder) readUint16(bytes_read *int) (uint16, error) {
 	var buf [2]byte
-	if _, err := io.ReadFull(d.r, buf[:]); err != nil {
+	if _, err := io.ReadFull(d.reader, buf[:]); err != nil {
 		return 0, err
 	}
+	(*bytes_read) += 2
 	return binary.BigEndian.Uint16(buf[:]), nil
 }
 
 // readBytes reads exactly n bytes or returns an error.
 func (d *Decoder) readBytes(n uint16) ([]byte, error) {
 	b := make([]byte, n)
-	if _, err := io.ReadFull(d.r, b); err != nil {
+	if _, err := io.ReadFull(d.reader, b); err != nil {
 		return nil, err
 	}
 	return b, nil
 }
 
 // readString expects a string marker, then length, then UTF-8 bytes.
-func (d *Decoder) readString() (string, error) {
-	t, err := d.readType()
+func (d *Decoder) readString(bytes_read *int) (string, error) {
+	t, err := d.readType(bytes_read)
 	if err != nil {
 		return "", err
 	}
 	if t != TypeString {
 		return "", fmt.Errorf("decoder: expected string type, got 0x%02x", t)
 	}
-	length, err := d.readUint16()
+	length, err := d.readUint16(bytes_read)
 	if err != nil {
 		return "", err
 	}
@@ -129,16 +140,17 @@ func (d *Decoder) readString() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	(*bytes_read) += int(length)
 	return string(data), nil
 }
 
 // readValue handles all supported value types.
-func (d *Decoder) readValue() (interface{}, error) {
-	t, err := d.readType()
+func (d *Decoder) readValue(bytes_read *int) (interface{}, error) {
+	t, err := d.readType(bytes_read)
 	if err != nil {
 		return nil, err
 	}
-	length, err := d.readUint16()
+	length, err := d.readUint16(bytes_read)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +158,7 @@ func (d *Decoder) readValue() (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	(*bytes_read) += int(length)
 	switch t {
 	case TypeString:
 		return string(payload), nil
@@ -180,10 +192,14 @@ func (d *Decoder) readValue() (interface{}, error) {
 
 	case TypeSlice:
 		// slices are just concatenated values: keep reading until EOF
-		subDec := NewDecoder(bytes.NewReader(payload))
+		subDec, err := DecodeBytes(payload)
+		if err != nil {
+			// return smth sensible
+			// log the error
+		}
 		var list []interface{}
 		for {
-			v, err := subDec.readValue()
+			v, err := subDec.readValue(bytes_read)
 			if err == io.EOF {
 				break
 			} else if err != nil {
