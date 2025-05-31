@@ -1,11 +1,13 @@
 package decoder
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
 	"math"
+	"net"
 )
 
 // Type markers must match your encoder.
@@ -20,17 +22,39 @@ const (
 
 // Decoder wraps any io.Reader and produces a map[string]interface{}.
 type Decoder struct {
-	r io.Reader
+	// a pointer to a bufio Reader
+	reader *bufio.Reader
+	// we are not taking a pointer
+	// because net.Conn is an interface itself
+	connection net.Conn
 }
 
 // NewDecoder returns a Decoder over the supplied reader.
-func NewDecoder(r io.Reader) *Decoder {
-	return &Decoder{r: r}
+func newDecoderConn(connection net.Conn) *Decoder {
+	return &Decoder{
+		connection: connection,
+		reader:     bufio.NewReader(connection),
+	}
+}
+func newDecoderBytes(reader *bufio.Reader) *Decoder {
+	return &Decoder{
+		connection: nil,
+		reader:     reader,
+	}
 }
 
 // DecodeBytes is a convenience for decoding a single []byte payload.
-func DecodeBytes(data []byte) (map[string]interface{}, error) {
-	return NewDecoder(bytes.NewReader(data)).Decode()
+func DecodeBytes(data []byte) (*Decoder, error) {
+	return newDecoderBytes(bufio.NewReader(bytes.NewReader(data))), nil
+}
+
+func DecodeConn(connection net.Conn) (*Decoder, error) {
+	// do a bunch of error calculations
+	return newDecoderConn(connection), nil
+
+}
+func DecodeBuffReader(reader *bufio.Reader) (*Decoder, error) {
+	return newDecoderBytes(reader), nil
 }
 
 // Decode reads key/value pairs until EOF, and returns the assembled map.
