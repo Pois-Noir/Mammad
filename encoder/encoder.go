@@ -30,19 +30,40 @@ func NewEncoder() *Encoder {
 	return &Encoder{buf: new(bytes.Buffer)}
 }
 
-// public function exposed to the user
-// we need to pass the target map
-// it will encode it in the form | value type (1 byte) | value len (2 bytes) | payload |
+// // public function exposed to the user
+// // we need to pass the target map
+// // it will encode it in the form | value type (1 byte) | value len (2 bytes) | payload |
+// func (e *Encoder) EncodeMap(m map[string]interface{}) ([]byte, error) {
+// 	// loop through the map
+// 	for key, val := range m {
+// 		// encode the key, val entry
+// 		if err := e.writeEntry(key, val); err != nil {
+// 			return nil, err
+// 		}
+// 	}
+// 	// return the byte slice
+// 	return e.buf.Bytes(), nil
+// }
+
+// temp for testing
+// got this from gpt
 func (e *Encoder) EncodeMap(m map[string]interface{}) ([]byte, error) {
-	// loop through the map
 	for key, val := range m {
-		// encode the key, val entry
 		if err := e.writeEntry(key, val); err != nil {
 			return nil, err
 		}
 	}
-	// return the byte slice
-	return e.buf.Bytes(), nil
+
+	// calculate message size
+	payload := e.buf.Bytes()
+	totalLen := uint32(len(payload))
+
+	// prepend header
+	finalBuf := new(bytes.Buffer)
+	binary.Write(finalBuf, binary.BigEndian, totalLen)
+	finalBuf.Write(payload)
+
+	return finalBuf.Bytes(), nil
 }
 
 // writeEntry = [ keyEntry | valueEntry ]

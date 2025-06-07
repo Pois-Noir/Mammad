@@ -48,6 +48,7 @@ func startTCPStreamReader(ioConn net.Conn, payloadChannel chan<- *payload.Payloa
 		payloadID++ // Increment ID (you could also use a UUID or hash if preferred)
 
 		// Allocate a new Payload with the given ID and length
+		// TODO fix this
 		payloadPtr, err := payload.NewPayload(payloadID, int(payloadLength))
 		if err != nil {
 			// TODO: Decide on recovery strategy with Amir
