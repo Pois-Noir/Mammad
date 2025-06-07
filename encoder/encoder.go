@@ -30,10 +30,45 @@ func NewEncoder() *Encoder {
 	return &Encoder{buf: new(bytes.Buffer)}
 }
 
+// encapsulate the bytes being passed
+func (e *Encoder) EncodeMsg(msg *Message ) ([]byte, error){ 
+
+	headerBytes, err := e.encodeHeader(msg) // header bytes
+	if err != nil {
+		return nil, err
+	} 
+
+	msg_buffer, err := e.encodeMap(msg.Payload) // payload in bytes
+	if err != nil {
+		return nil. err
+	}
+
+	return append(headerBytes, msg_buffer), nil
+}
+
+// manipulate the bytes here
+func (e *Encoder) encodeHeader(msg *Message ) ([]byte, error){
+	var hBuf bytes.Buffer // variable for the byteStream
+
+	// 1-byte status
+	if err := hBuf.Write(msg.Header.Status); err != nil {
+		return nil, fmt.Errorf("encodeHeader: write status: %w ", err)
+	}
+
+	// 4-byte message length
+	if err := binary.Write(&hBuf, binary.BigEndian, msg.Header.Length); err != nil {
+		return nil, fmt.Errorf("encodeHeader: write status: %w ", err)
+	}
+
+	// 5-byte status
+	return hBuf.Bytes(), nil
+}
+
 // public function exposed to the user
 // we need to pass the target map
 // it will encode it in the form | value type (1 byte) | value len (2 bytes) | payload |
-func (e *Encoder) EncodeMap(m map[string]interface{}) ([]byte, error) {
+// not exposed to the user
+func (e *Encoder) encodeMap(m map[string]interface{}) ([]byte, error) {
 	// loop through the map
 	for key, val := range m {
 		// encode the key, val entry
