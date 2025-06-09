@@ -1,9 +1,10 @@
 package main
 
 import (
-	decoder "botzila/parser/decoder"
-	encoder "botzila/parser/encoder"
 	"fmt"
+
+	decoder "github.com/Pois-Noir/Mammad/decoder"
+	encoder "github.com/Pois-Noir/Mammad/encoder"
 )
 
 func main() {

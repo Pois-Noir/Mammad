@@ -1,11 +1,12 @@
 package buffered_reader
 
 import (
-	payload "botzila/parser/payload"
 	"bufio"
 	"encoding/binary"
 	"io"
 	"net"
+
+	payload "github.com/Pois-Noir/Mammad/payload"
 )
 
 // StartTCPStreamReader is the entry point to begin reading a TCP stream
