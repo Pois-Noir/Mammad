@@ -31,23 +31,23 @@ func NewEncoder() *Encoder {
 }
 
 // encapsulate the bytes being passed
-func (e *Encoder) EncodeMsg(msg *Message ) ([]byte, error){ 
+func (e *Encoder) EncodeMsg(msg *Message) ([]byte, error) {
 
 	headerBytes, err := e.encodeHeader(msg) // header bytes
 	if err != nil {
 		return nil, err
-	} 
+	}
 
 	msg_buffer, err := e.encodeMap(msg.Payload) // payload in bytes
 	if err != nil {
-		return nil. err
+		return nil, err
 	}
 
 	return append(headerBytes, msg_buffer), nil
 }
 
 // manipulate the bytes here
-func (e *Encoder) encodeHeader(msg *Message ) ([]byte, error){
+func (e *Encoder) encodeHeader(msg *Message) ([]byte, error) {
 	var hBuf bytes.Buffer // variable for the byteStream
 
 	// 1-byte status
