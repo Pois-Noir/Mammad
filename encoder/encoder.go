@@ -1,12 +1,13 @@
 package encoder
 
 import (
-	g_errors "botzila/parser/errors"
 	"bytes"
 	"encoding/binary"
 	"fmt"
 	"math"
 	"reflect"
+
+	g_errors "github.com/Pois-Noir/Mammad/errors"
 )
 
 const (
