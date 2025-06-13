@@ -46,12 +46,7 @@ func NewDecoderBufReader(reader *bufio.Reader) *Decoder {
 	}
 }
 
-func (d *Decoder) Decode() (map[string]interface{}, error) {
-	header, err := d.readHeader()
-	if err != nil {
-		return nil, err
-	}
-	msgLen := int(binary.BigEndian.Uint32(header[:]))
+func (d *Decoder) Decode(msgLen int) (map[string]interface{}, error) {
 
 	result := make(map[string]interface{})
 	startBytes := d.bytesRead
@@ -69,13 +64,13 @@ func (d *Decoder) Decode() (map[string]interface{}, error) {
 	return result, nil
 }
 
-func (d *Decoder) readHeader() ([4]byte, error) {
-	var header [4]byte
-	if err := d.readFull(header[:]); err != nil {
-		return [4]byte{}, err
-	}
-	return header, nil
-}
+// func (d *Decoder) readHeader() ([4]byte, error) {
+// 	var header [4]byte
+// 	if err := d.readFull(header[:]); err != nil {
+// 		return [4]byte{}, err
+// 	}
+// 	return header, nil
+// }
 
 func (d *Decoder) readType() (byte, error) {
 	var t [1]byte
@@ -172,7 +167,7 @@ func (d *Decoder) readFull(buf []byte) error {
 // Nested decoding helpers
 func decodeNestedMap(data []byte) (map[string]interface{}, error) {
 	subDecoder := NewDecoderBytes(data)
-	return subDecoder.Decode()
+	return subDecoder.Decode(len(data))
 }
 
 func decodeNestedSlice(data []byte) ([]interface{}, error) {

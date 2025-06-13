@@ -57,14 +57,7 @@ func (e *Encoder) EncodeMap(m map[string]interface{}) ([]byte, error) {
 
 	// calculate message size
 	payload := e.buf.Bytes()
-	totalLen := uint32(len(payload))
-
-	// prepend header
-	finalBuf := new(bytes.Buffer)
-	binary.Write(finalBuf, binary.BigEndian, totalLen)
-	finalBuf.Write(payload)
-
-	return finalBuf.Bytes(), nil
+	return payload, nil
 }
 
 // writeEntry = [ keyEntry | valueEntry ]

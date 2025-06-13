@@ -16,21 +16,22 @@ func main() {
 		"key3":               3,
 		"key4":               4.123,
 		"key5":               true,
-		// "key4": map[string]int{
-		// 	"key45": 1,
-		// 	"key46": 2,
-		// 	"key47": 3,
-		// },
+		"key41": map[string]interface{}{
+			"key45": 1,
+			"key46": 2,
+			"key47": 3,
+		},
 	}
 
-	byteStream, err := testEncoder.EncodeMap(testMap)
+	byteStream, _ := testEncoder.EncodeMap(testMap)
 	decoder := decoder.NewDecoderBytes(byteStream)
-	result, err := decoder.Decode()
+	result, err := decoder.Decode(len(byteStream))
 
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+
 	fmt.Println(result)
 
 }
